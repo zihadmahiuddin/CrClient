@@ -15,7 +15,7 @@ namespace Blake2Sharp
 {
 	internal static class Blake2IvBuilder
 	{
-		public static readonly Blake2BTreeConfig SequentialTreeConfig = new Blake2BTreeConfig() { IntermediateHashSize = 0, LeafSize = 0, FanOut = 1, MaxHeight = 1 };
+		private static readonly Blake2BTreeConfig SequentialTreeConfig = new Blake2BTreeConfig() { IntermediateHashSize = 0, LeafSize = 0, FanOut = 1, MaxHeight = 1 };
 
 		public static ulong[] ConfigB(Blake2BConfig config, Blake2BTreeConfig treeConfig)
 		{

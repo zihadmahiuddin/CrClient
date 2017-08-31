@@ -28,20 +28,20 @@ namespace Blake2Sharp
 {
 	public sealed partial class Blake2BCore
 	{
-		public bool _isInitialized = false;
+		private bool _isInitialized = false;
 
-		public int _bufferFilled;
-		public byte[] _buf = new byte[128];
+		private int _bufferFilled;
+		private byte[] _buf = new byte[128];
 
-		public ulong[] _m = new ulong[16];
-		public ulong[] _h = new ulong[8];
-		public ulong _counter0;
-		public ulong _counter1;
-		public ulong _finalizationFlag0;
-		public ulong _finalizationFlag1;
+		private ulong[] _m = new ulong[16];
+		private ulong[] _h = new ulong[8];
+		private ulong _counter0;
+		private ulong _counter1;
+		private ulong _finalizationFlag0;
+		private ulong _finalizationFlag1;
 
-		public const int NumberOfRounds = 12;
-		public const int BlockSizeInBytes = 128;
+		private const int NumberOfRounds = 12;
+		private const int BlockSizeInBytes = 128;
 
 		const ulong IV0 = 0x6A09E667F3BCC908UL;
 		const ulong IV1 = 0xBB67AE8584CAA73BUL;
@@ -52,7 +52,7 @@ namespace Blake2Sharp
 		const ulong IV6 = 0x1F83D9ABFB41BD6BUL;
 		const ulong IV7 = 0x5BE0CD19137E2179UL;
 
-		public static readonly int[] Sigma = new int[NumberOfRounds * 16] {
+		private static readonly int[] Sigma = new int[NumberOfRounds * 16] {
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 			14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3,
 			11, 8, 12, 0, 5, 2, 15, 13, 10, 14, 3, 6, 7, 1, 9, 4,
@@ -80,7 +80,7 @@ namespace Blake2Sharp
 				((ulong)buf[offset]));
 		}
 
-		public static void UInt64ToBytes(ulong value, byte[] buf, int offset)
+		private static void UInt64ToBytes(ulong value, byte[] buf, int offset)
 		{
 			buf[offset + 7] = (byte)(value >> 7 * 8);
 			buf[offset + 6] = (byte)(value >> 6 * 8);

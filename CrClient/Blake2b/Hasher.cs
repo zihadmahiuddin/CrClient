@@ -34,7 +34,7 @@ namespace Blake2Sharp
 
 		internal class HashAlgorithmAdapter : HashAlgorithm
 		{
-			public readonly Hasher _hasher;
+			private readonly Hasher _hasher;
 
 			protected override void HashCore(byte[] array, int ibStart, int cbSize)
 			{

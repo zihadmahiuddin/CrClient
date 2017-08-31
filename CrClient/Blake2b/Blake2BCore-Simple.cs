@@ -16,14 +16,14 @@ namespace Blake2Sharp
 #if false
 	public sealed partial class Blake2BCore
 	{
-		public ulong[] _v = new ulong[16];
+		private ulong[] _v = new ulong[16];
 
-		public static ulong RotateRight(ulong value, int nBits)
+		private static ulong RotateRight(ulong value, int nBits)
 		{
 			return (value >> nBits) | (value << (64 - nBits));
 		}
 
-		public void G(int a, int b, int c, int d, int r, int i)
+		private void G(int a, int b, int c, int d, int r, int i)
 		{
 			int p = (r << 4) + i;
 			int p0 = Sigma[p];

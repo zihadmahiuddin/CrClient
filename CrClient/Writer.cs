@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -25,7 +26,7 @@ namespace CrClient
             else
             {
                 byte[] _Buffer = Encoding.UTF8.GetBytes(_Value);
-    
+
                 _Packet.AddInt(_Buffer.Length);
                 _Packet.AddRange(_Buffer);
             }
@@ -36,13 +37,22 @@ namespace CrClient
             _Packet.AddRange(BitConverter.GetBytes(_Value).Reverse());
         }
 
+        public static void AddULong(this List<byte> _Packet, ulong _Value)
+        {
+            _Packet.AddRange(BitConverter.GetBytes(_Value).Reverse());
+        }
+        public static void AddUInt(this List<byte> _Packet, uint _Value)
+        {
+            _Packet.AddRange(BitConverter.GetBytes(_Value).Reverse());
+        }
+
         public static byte[] HexaToBytes(this string _Value)
         {
             string _Tmp = _Value.Replace("-", string.Empty);
             return Enumerable.Range(0, _Tmp.Length).Where(x => x % 2 == 0).Select(x => Convert.ToByte(_Tmp.Substring(x, 2), 16)).ToArray();
         }
 
-        public static void AddHexa(this List<byte> _Packet, string _Value)
+        public static void AddHex(this List<byte> _Packet, string _Value)
         {
             string _Tmp = _Value.Replace("-", string.Empty);
             _Packet.AddRange(Enumerable.Range(0, _Tmp.Length).Where(x => x % 2 == 0).Select(x => Convert.ToByte(_Tmp.Substring(x, 2), 16)).ToArray());

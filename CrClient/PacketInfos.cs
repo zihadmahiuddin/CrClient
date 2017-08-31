@@ -8,7 +8,7 @@ namespace CrClient
 {
     internal class PacketInfos
     {
-        private static readonly Dictionary<int, string> knownPackets = new Dictionary<int, string>
+        private static readonly Dictionary<ushort, string> knownPackets = new Dictionary<ushort, string>
         {
             {10101, "Login"},
             {10108, "KeepAlive"},
@@ -46,16 +46,16 @@ namespace CrClient
             {24340, "BookmarksList"}
         };
 
-        public static string GetPacketName(int packetid)
+        public static string GetPacketName(ushort packetid)
         {
             var packetname = "";
             if (knownPackets.ContainsKey(packetid))
             {
-                packetname = knownPackets[packetid] + "(" + packetid + ")";
+                packetname = knownPackets[packetid];
             }
             else
             {
-                packetname = "Unknown Packet (" + packetid + ")";
+                packetname = "Unknown Packet";
             }
             return packetname;
         }
