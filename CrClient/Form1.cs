@@ -131,10 +131,10 @@ namespace CrClient
             return hex.Replace("-", "");
         }
 
-        private void ReadData(byte[] encrypted,ushort id)
+        private void ReadData(byte[] payload,ushort id)
         {
             Console.WriteLine($"ID: {id}");
-            GetDefinition(id, encrypted);
+            GetDefinition(id, payload);
         }
 
         private void GetDefinition(ushort id,byte[] payload)

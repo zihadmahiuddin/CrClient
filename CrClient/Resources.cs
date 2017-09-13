@@ -8,12 +8,10 @@ namespace CrClient
 {
     class Resources
     {
-        public static Definition Definition;
         public static Logger Logger;
 
         public Resources()
         {
-            Definition = new Definition();
 
             Logger = new Logger();
 
