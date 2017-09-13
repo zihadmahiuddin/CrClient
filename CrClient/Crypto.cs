@@ -1,75 +1,77 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Net.Sockets;
 using Sodium;
 using System.Text;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace CrClient
 {
     public class Crypto
     {
-        public static byte[] Encrypt(int id, int version, byte[] data, byte[] privateKey, byte[] publicKey)
+        public static byte[] Encrypt(byte[] Payload, int Id, int Version, KeyPair keyPair)
         {
-            byte[] encrypted;
-            switch (id)
+            byte[] encryptedPayload;
+            switch (Id)
             {
                 case 10100:
-                    encrypted = data;
+                    encryptedPayload = Payload;
                     break;
                 case 10101:
-                    byte[] nonce = GenericHash.Hash(publicKey.Concat(Keys.ServerKey).ToArray(), null, 24);
-                    data = Encoding.UTF8.GetBytes(GlobalValues.SessionKey).Concat(GlobalValues.ClientNonce).Concat(data).ToArray();
-                    encrypted = PublicKeyBox.Create(data, nonce, privateKey, Keys.ServerKey);
-                    encrypted = publicKey.Concat(encrypted).ToArray();
+                    Config.Nonce = GenericHash.Hash(keyPair.PublicKey.Concat(Keys.ServerKey).ToArray(), null, 24);
+                    Config.SNonce = Utils.GenerateRandomBytes(24);
+                    Payload = Config.SessionKey.Concat(Config.SNonce).Concat(Payload).ToArray();
+                    encryptedPayload = PublicKeyBox.Create(Payload, Config.Nonce, keyPair.PrivateKey, Keys.ServerKey);
+                    encryptedPayload = keyPair.PublicKey.Concat(encryptedPayload).ToArray();
+                    Console.WriteLine(BitConverter.ToString(Config.Nonce).Replace("-", ""));
+                    Console.WriteLine(BitConverter.ToString(Config.SNonce).Replace("-",""));
+                    Console.WriteLine(BitConverter.ToString(Config.SessionKey).Replace("-", ""));
                     break;
                 default:
-                    encrypted = data;
-                    Console.WriteLine("Couldn't recognize message id.");
-                    MessageBox.Show("Couldn't recognize message id.");
+                    Config.SNonce = Utilities.Increment(Utilities.Increment(Config.SNonce));
+                    encryptedPayload = SecretBox.Create(Payload, Config.SNonce, Config.SharedKey);
                     break;
             }
-            byte[] packet = BitConverter.GetBytes(id).Reverse().Skip(2).Concat(BitConverter.GetBytes(encrypted.Length).Reverse().Skip(1)).Concat(BitConverter.GetBytes(version).Reverse().Skip(2)).Concat(encrypted).ToArray();
+            byte[] packet = BitConverter.GetBytes(Id).Reverse().Skip(2).Concat(BitConverter.GetBytes(encryptedPayload.Length).Reverse().Skip(1)).Concat(BitConverter.GetBytes(Version).Reverse().Skip(2)).Concat(encryptedPayload).ToArray();
             return packet;
         }
-
-        public static byte[] Decrypt(byte[] packet, byte[] privateKey, byte[] publicKey)
+        public static byte[] Decrypt(byte[] Payload,KeyPair keyPair)
         {
-            byte[] decrypted;
-            using (var reader = new Reader(packet))
+            ushort Id;
+            int Length;
+            ushort Version;
+            byte[] decryptedPayload;
+            using(Reader reader = new Reader(Payload))
             {
-                ushort id = reader.ReadUInt16();
-                reader.Seek(3, SeekOrigin.Current);
-                ushort version = reader.ReadUInt16();
-                byte[] encrypted = reader.ReadAllBytes;
-                switch (id)
-                {
-                    case 20100:
-                        decrypted = encrypted;
-                        break;
-                    case 20103:
-                        decrypted = encrypted;
-                        break;
-                    case 20104:
-                        byte[] nonce = GenericHash.Hash(GlobalValues.ClientNonce.Concat(publicKey).Concat(Keys.ServerKey).ToArray(), null, 24);
-
-                        decrypted = PublicKeyBox.Open(encrypted, nonce, privateKey, Keys.ServerKey);
-
-                        GlobalValues.ServerNonce = decrypted.Take(24).ToArray();
-                        GlobalValues.ServerSharedKey = decrypted.Skip(24).Take(32).ToArray();
-
-                        decrypted = decrypted.Skip(24).Skip(32).ToArray();
-                        break;
-                    default:
-                        GlobalValues.ServerNonce = Utilities.Increment(Utilities.Increment(GlobalValues.ServerNonce));
-
-                        decrypted = SecretBox.Open(new byte[16].Concat(encrypted).ToArray(), GlobalValues.ServerNonce, GlobalValues.ServerSharedKey);
-                        break;
-
-                }
+                Id = reader.ReadUInt16();
+                Length = reader.ReadInt32();
+                Version = reader.ReadUInt16();
+                Payload = Payload.Skip(2).Skip(3).Skip(2).ToArray();
             }
-            return decrypted;
+            switch (Id)
+            {
+                case 20100:
+                    decryptedPayload = Payload;
+                    break;
+                case 20103:
+                    Config.ServerNonce = GenericHash.Hash(Config.SNonce.Concat(keyPair.PublicKey).Concat(Keys.ServerKey).ToArray(), null, 24);
+                    decryptedPayload = PublicKeyBox.Open(Payload, Config.ServerNonce, keyPair.PrivateKey, Keys.ServerKey);
+                    Config.RNonce = decryptedPayload.Take(24).ToArray();
+                    Config.SharedKey = decryptedPayload.Skip(24).Take(32).ToArray();
+                    break;
+                case 20104:
+                    Config.ServerNonce = GenericHash.Hash(Config.SNonce.Concat(keyPair.PublicKey).Concat(Keys.ServerKey).ToArray(), null, 24);
+                    decryptedPayload = PublicKeyBox.Open(Payload, Config.ServerNonce, keyPair.PrivateKey, Keys.ServerKey);
+                    Config.RNonce = decryptedPayload.Take(24).ToArray();
+                    Config.SharedKey = decryptedPayload.Skip(24).Take(32).ToArray();
+                    break;
+                default:
+                    Config.RNonce = Utilities.Increment(Utilities.Increment(Config.RNonce));
+                    decryptedPayload = SecretBox.Open(Payload, Config.RNonce, Config.SharedKey);
+                    break;
+            }
+            return decryptedPayload;
         }
     }
 }

@@ -1,18 +1,23 @@
 ﻿using Sodium;
-using Blake2Sharp;
+using System.Linq;
+using System.Security.Cryptography;
 
 namespace CrClient
 {
     public class Nonce
     {
-        public static byte[] Generate(byte[] publicKey)
+        public static byte[] GenerateNonce(byte[] publicKey)
         {
-            Hasher Blake2b = new Blake2BHasher(new Blake2BConfig() { OutputSizeInBytes = 24 });
-            Blake2b.Init();
-            Blake2b.Update(publicKey);
-            Blake2b.Update(Keys.ServerKey);
-            byte[] nonce = Blake2b.Finish();
-            return nonce;
+            return GenericHash.Hash(publicKey.Concat(Keys.ServerKey).ToArray(),null,24);
+        }
+        public static byte[] GenerateRandomNonce(int length)
+        {
+            byte[] d = new byte[length];
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                rng.GetNonZeroBytes(d);
+            }
+            return d;
         }
     }
 }

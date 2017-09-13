@@ -77,7 +77,6 @@ namespace CrClient
 
             return _LR;
         }
-
         public static long ReadVInt64(this BinaryReader br)
         {
             byte temp = br.ReadByte();
@@ -154,6 +153,7 @@ namespace CrClient
             i ^= -Sign;
             return i;
         }
+
         public static void AddVInt(this List<byte> Packet,int v2)
         {
 
@@ -231,5 +231,85 @@ namespace CrClient
             Packet.Add((byte)v2);
             Packet.AddRange(Packet.ToArray());
         }
+
+        public static byte[] WritevInt(int v2)
+        {
+            var stream = new MemoryStream(5);
+
+            if (v2 <= -1)
+            {
+                if (!((v2 + 63 < 0) ^ true))
+                {
+                    stream.WriteByte((byte)(v2 & 0x3F | 0x40));
+                    return stream.ToArray();
+                }
+                if (v2 >= -8191)
+                {
+                    stream.WriteByte((byte)(v2 | 0xC0));
+                    v2 >>= 6 & 0x7F;
+                    stream.WriteByte((byte)v2);
+                    return stream.ToArray();
+                }
+                if (v2 >= -1048575)
+                {
+                    stream.WriteByte((byte)(v2 | 0xC0));
+                    stream.WriteByte((byte)(v2 >> 6 | 0x80));
+                    v2 >>= 13 & 0x7F;
+                    stream.WriteByte((byte)v2);
+                    return stream.ToArray();
+                }
+                stream.WriteByte((byte)(v2 | 0xC0));
+                stream.WriteByte((byte)(v2 >> 6 | 0x80));
+                stream.WriteByte((byte)(v2 >> 13 | 0x80));
+                v2 >>= 20;
+                if (v2 <= -134217728)
+                {
+                    stream.WriteByte((byte)(v2 | 0x80));
+                    v2 >>= 27 & 0xF;
+                    stream.WriteByte((byte)v2);
+                    return stream.ToArray();
+                }
+                stream.WriteByte((byte)(v2 & 0x7F));
+                return stream.ToArray();
+            }
+            if (v2 > 63)
+            {
+                if (v2 < 0x2000)
+                {
+                    stream.WriteByte((byte)(v2 & 0x3F | 0x80));
+                    v2 >>= 6 & 0x7F;
+                    stream.WriteByte((byte)v2);
+                    return stream.ToArray();
+                }
+                if (v2 < 0x100000)
+                {
+                    stream.WriteByte((byte)(v2 & 0x3F | 0x80));
+                    stream.WriteByte((byte)(v2 >> 6 | 0x80));
+                    v2 >>= 13 & 0x7F;
+                    stream.WriteByte((byte)v2);
+                    return stream.ToArray();
+                }
+                stream.WriteByte((byte)(v2 & 0x3F | 0x80));
+                stream.WriteByte((byte)(v2 >> 6 | 0x80));
+                stream.WriteByte((byte)(v2 >> 13 | 0x80));
+                v2 >>= 20;
+
+                if (v2 >= 0x8000000)
+                {
+                    stream.WriteByte((byte)(v2 | 0x80));
+                    v2 >>= 27 & 0xF;
+                    stream.WriteByte((byte)v2);
+                    return stream.ToArray();
+                }
+
+                stream.WriteByte((byte)(v2 & 0x7F));
+                return stream.ToArray();
+            }
+
+            v2 = v2 & 0x3F;
+            stream.WriteByte((byte)v2);
+            return stream.ToArray();
+        }
+
     }
 }
