@@ -65,6 +65,7 @@ namespace CrClient
                     decryptedPayload = PublicKeyBox.Open(Payload, Config.ServerNonce, keyPair.PrivateKey, Keys.ServerKey);
                     Config.RNonce = decryptedPayload.Take(24).ToArray();
                     Config.SharedKey = decryptedPayload.Skip(24).Take(32).ToArray();
+                    decryptedPayload = decryptedPayload.Skip(24).Skip(32).ToArray();
                     break;
                 default:
                     Config.RNonce = Utilities.Increment(Utilities.Increment(Config.RNonce));

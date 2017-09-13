@@ -64,9 +64,10 @@ namespace CrClient
                     ServerConfig.clientSNonce = decrypted.Skip(24).Take(24).ToArray();
                     ServerConfig.clientSNonce = ServerConfig.clientSNonce;
                     decrypted = decrypted.Skip(24).Skip(24).ToArray();
-                    Console.WriteLine(BitConverter.ToString(nonce).Replace("-", ""));
                     Console.WriteLine(BitConverter.ToString(ServerConfig.clientSNonce).Replace("-", ""));
                     Console.WriteLine(BitConverter.ToString(ServerConfig.clientSessionKey).Replace("-", ""));
+                    Console.WriteLine(BitConverter.ToString(nonce).Replace("-", ""));
+                    Console.WriteLine(BitConverter.ToString(ServerConfig.clientPublicKey).Replace("-", ""));
                     break;
                 default:
                     ServerConfig.clientSNonce = Utilities.Increment(Utilities.Increment(ServerConfig.clientSNonce));

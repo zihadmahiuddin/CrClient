@@ -88,7 +88,21 @@ namespace CrClient
                 writer.Write("C8817D");
                 writer.Write("aa3e6cf0-0162-43d3-8719-f3d3b00356b7");
                 writer.Write("4.4.2");
-                //Others are not needed xD
+                writer.Write(true);
+                writer.Write("");
+                writer.Write("c0389670ea3b1978");
+                writer.Write("en-US");
+                writer.Write(false);
+                writer.Write(false);
+                writer.Write("");
+                writer.Write(false);
+                writer.Write("");
+                writer.Write(VInt.WritevInt(2));
+                writer.Write("");
+                writer.Write("");
+                writer.Write("");
+                writer.Write("");
+                writer.Write(false);
             }
 
             Console.WriteLine($"Payload: \n{ByteArrayToHexString(data)}");
