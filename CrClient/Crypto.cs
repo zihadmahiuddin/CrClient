@@ -55,10 +55,7 @@ namespace CrClient
                     decryptedPayload = Payload;
                     break;
                 case 20103:
-                    Config.ServerNonce = GenericHash.Hash(Config.SNonce.Concat(keyPair.PublicKey).Concat(Keys.ServerKey).ToArray(), null, 24);
-                    decryptedPayload = PublicKeyBox.Open(Payload, Config.ServerNonce, keyPair.PrivateKey, Keys.ServerKey);
-                    Config.RNonce = decryptedPayload.Take(24).ToArray();
-                    Config.SharedKey = decryptedPayload.Skip(24).Take(32).ToArray();
+                    decryptedPayload = Payload;
                     break;
                 case 20104:
                     Config.ServerNonce = GenericHash.Hash(Config.SNonce.Concat(keyPair.PublicKey).Concat(Keys.ServerKey).ToArray(), null, 24);
@@ -69,7 +66,7 @@ namespace CrClient
                     break;
                 default:
                     Config.RNonce = Utilities.Increment(Utilities.Increment(Config.RNonce));
-                    decryptedPayload = SecretBox.Open(Payload, Config.RNonce, Config.SharedKey);
+                    decryptedPayload = SecretBox.Open(new byte[16].Concat(Payload).ToArray(), Config.RNonce, Config.SharedKey);
                     break;
             }
             return decryptedPayload;

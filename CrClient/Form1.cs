@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Windows.Forms;
@@ -17,16 +18,23 @@ namespace CrClient
         public byte[] Buffer;
         public byte[] encrypted;
         public Socket sck = new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
+		public string token;
+        public int tick;
+        public long checksum;
+        System.Timers.Timer timer = new System.Timers.Timer();
+        System.Timers.Timer tickTimer = new System.Timers.Timer();
         public Form1()
         {
             InitializeComponent();
             PrivateKey = keyPair.PrivateKey;
             PublicKey = keyPair.PublicKey;
+			WebClient wc = new WebClient();
+			token = wc.DownloadString("http://localhost/Tokens/cr_account_token.txt");
         }
 
         public void btnConnect_Click(object sender, EventArgs e)
         {
-            sck.Connect("192.168.0.101", 9339);
+            sck.Connect("192.168.56.1", 9339);
         }
 
         public void btnDisconnect_Click(object sender, EventArgs e)
@@ -58,7 +66,7 @@ namespace CrClient
             sck.Send(encrypted);
             Console.WriteLine(ByteArrayToHexString(data));
             Logger.Write(ByteArrayToHexString(encrypted), PacketInfos.GetPacketName(10100));
-            byte[] serverHello = new byte[2048];
+            byte[] serverHello = new byte[2049];
             int received = sck.Receive(serverHello);
             Array.Resize(ref serverHello, received);
             Config.SessionKey = serverHello.Skip(11).ToArray();
@@ -76,8 +84,11 @@ namespace CrClient
             MemoryStream stream = new MemoryStream(data);
             using (var writer = new MessageWriter(stream))
             {
-                writer.Write(167521404572);
-                writer.Write("dwnegp67n9f7dfhhaes6bs2pfftyrs4anxjjmjg4");//LoL It's a training camp account...
+                //long id = 12885955392;
+                long id = 167521404572;
+                writer.Write(id);
+                //writer.Write(token);
+                writer.Write("dwnegp67n9f7dfhhaes6bs2pfftyrs4anxjjmjg4");
                 writer.Write(VInt.WritevInt(3));
                 writer.Write(VInt.WritevInt(1));
                 writer.Write(VInt.WritevInt(377));
@@ -128,10 +139,17 @@ namespace CrClient
                         Console.WriteLine(BitConverter.ToString(loginResult).Replace("-", ""));
                         decrypted = Crypto.Decrypt(loginResult, keyPair);
                         GetDefinition(id, decrypted);
+                        timer.Enabled = true;
+                        timer.Interval = 10000;
+                        timer.Elapsed += TimerElapsed;
+                        tickTimer.Enabled = true;
+                        tickTimer.Interval = 50;
+                        tickTimer.Elapsed += CountTicks;
                         break;
                     case 20103:
                         Console.WriteLine(id);
                         decrypted = Crypto.Decrypt(loginResult, keyPair);
+                        GetDefinition(id, decrypted);
                         break;
                     default:
                         Console.WriteLine($"Unknown response from server [{id}].");
@@ -139,6 +157,20 @@ namespace CrClient
                 }
             }
             }
+
+        private void CountTicks(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            tick++;
+        }
+
+        private void TimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            byte[] keepAlive = new byte[0];
+            byte[] encryptedKeepAlive = Crypto.Encrypt(keepAlive, 10108, 1, keyPair);
+            sck.Send(encryptedKeepAlive);
+            ReadData(EnDecrypt.Decrypt(encrypted),10108);
+        }
+
         public static string ByteArrayToHexString(byte[] byteArray)
         {
             string hex = BitConverter.ToString(byteArray);
@@ -201,6 +233,17 @@ namespace CrClient
                         reader.ReadByte();
                     }
                     break;
+                case 10108:
+                    Console.WriteLine("No data to show.");
+                    break;
+                case 14315:
+                    payload = EnDecrypt.Decrypt(payload);
+                    Console.WriteLine(ByteArrayToHexString(payload));
+                    using(var reader = new Reader(payload))
+                    {
+                        Console.WriteLine($"Message: {reader.ReadString()}");
+                    }
+                    break;
                 case 20104:
                     Console.WriteLine(BitConverter.ToString(payload).Replace("-", ""));
                     using (var reader = new Reader(payload))
@@ -212,7 +255,7 @@ namespace CrClient
                         Console.WriteLine($"Facebook ID: {reader.ReadString()}");
                         Console.WriteLine($"Server Major Version: {reader.ReadVInt()}");
                         Console.WriteLine($"Server Build Version: {reader.ReadVInt()}");
-                        reader.ReadVInt();
+                        Console.WriteLine($"Server Type: {reader.ReadVInt()}");
                         Console.WriteLine($"Content Version: {reader.ReadVInt()}");
                         Console.WriteLine($"Environment: {reader.ReadString()}");
                         Console.WriteLine($"Session Count: {reader.ReadVInt()}");
@@ -226,12 +269,89 @@ namespace CrClient
                         reader.ReadString();
                         reader.ReadString();
                         Console.WriteLine($"Region: {reader.ReadString()}");
+                        reader.ReadString();
                         Console.WriteLine($"Content URL: {reader.ReadString()}");
                         Console.WriteLine($"Event Asset URL: {reader.ReadString()}");
                         reader.ReadByte();
                     }
+                    byte[] ohd = new byte[8192];
+                    int received = sck.Receive(ohd);
+                    Array.Resize(ref ohd, received);
+                    Console.WriteLine($"Encrypted OHD: {BitConverter.ToString(ohd).Replace("-","")}");
+                    payload = Crypto.Decrypt(ohd, keyPair);
+                    ReadData(payload, 24101);
+                    Console.WriteLine($"Decrypted OHD: {BitConverter.ToString(payload).Replace("-","")}");
+                    break;
+                case 24101:
+                    using (var reader = new Reader(payload))
+                    {
+                        reader.ReadInt64();
+                        checksum = reader.ReadVInt64();
+                    }
                     break;
             }
+        }
+
+        private void btnSendClanChatMessage_Click(object sender, EventArgs e)
+        {
+            byte[] chat = new byte[1024];
+            Stream chatStream = new MemoryStream(chat);
+            using (var writer = new MessageWriter(chatStream))
+            {
+                writer.Write(tbClanChatMessage.Text);
+            }
+            byte[] encryptedChat = Crypto.Encrypt(chat, 14315, 1, keyPair);
+            sck.Send(encryptedChat);
+        }
+
+        private void btnOpen_Click(object sender, EventArgs e)
+        {
+            byte[] commandCount = VInt.WritevInt(1);
+            byte[] commandId = VInt.WritevInt(509);
+            byte[] startTick = VInt.WritevInt(tick);
+            byte[] endtick = VInt.WritevInt(tick);
+            byte[] low = VInt.WritevInt(1053504);
+            byte[] high = VInt.WritevInt(3);
+            List<byte> commandFreeChest = new List<byte>();
+            commandFreeChest.AddRange(commandCount);
+            commandFreeChest.AddRange(commandId);
+            commandFreeChest.AddRange(startTick);
+            commandFreeChest.AddRange(endtick);
+            commandFreeChest.AddRange(low);
+            commandFreeChest.AddRange(high);
+            byte[] array = commandFreeChest.ToArray();
+            byte[] endClientTurn = new byte[2048];
+            Stream stream = new MemoryStream(endClientTurn);
+            using (var writer = new MessageWriter(stream))
+            {
+                writer.Write(VInt.WritevInt(tick));
+                writer.Write(VInt.WritevInt(Convert.ToInt32(checksum)));
+                writer.Write(VInt.WritevInt(array.Length));
+                writer.Write(array);
+            }
+            byte[] encryptedArray = Crypto.Encrypt(endClientTurn, 14102, 1, keyPair);
+            sck.Send(encryptedArray);
+            checksum++;
+        }
+
+        private void btnJoinClan_Click(object sender, EventArgs e)
+        {
+            long id = Convert.ToInt64(tbClanTag.Text);
+            byte[] joinClan = new byte[16];
+            Stream stream = new MemoryStream(joinClan);
+            using (var writer = new MessageWriter(stream))
+            {
+                writer.Write(id);
+            }
+            byte[] encrypted = Crypto.Encrypt(joinClan, 14305, 1, keyPair);
+            sck.Send(encrypted);
+        }
+
+        private void btnLeaveCurrentClan_Click(object sender, EventArgs e)
+        {
+            byte[] leaveClan = new byte[0];
+            byte[] encrypted = Crypto.Encrypt(leaveClan, 14308, 1, keyPair);
+            sck.Send(encrypted);
         }
     }
 }

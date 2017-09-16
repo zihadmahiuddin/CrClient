@@ -1,5 +1,4 @@
-﻿using NaCl;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 
 namespace CrClient
 {
