@@ -9,11 +9,13 @@ namespace CrClient
     class Resources
     {
         public static Logger Logger;
+        public static ConfigManager ConfigManager;
 
         public Resources()
         {
 
             Logger = new Logger();
+            ConfigManager = new ConfigManager();
 
         }
     }

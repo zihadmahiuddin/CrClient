@@ -1,0 +1,10 @@
+{
+  "ResourceHash": "b7b4b10c5bfed52f3c51ebc9bdec3930d7470b20",
+  //"ResourceHash": "4f3288aeb8e31f362b8b83aef43d9b427b0e63c1",//RoKi's Server's Hash
+  //"ResourceHash": "ef03fb447c37ab36dfd03095339f657c4a95de32",//Original Server's Hash
+  "TagChars": "0289PYLQGRJCUV",
+  "MajorVersion": 3,
+  "MinorVersion": 0,
+  "BuildVersion": 690,
+  "UseRC4": false
+}

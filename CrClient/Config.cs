@@ -1,16 +1,26 @@
-﻿using System.Net.Sockets;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace CrClient
 {
     public class Config
     {
-        public static Socket sck = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        public static byte[] SessionKey { get; set; }
-        public static byte[] SharedKey { get; set; }
-        public static byte[] ServerKey { get; set; }
-        public static byte[] Nonce { get; set; }
-        public static byte[] ServerNonce { get; set; }
-        public static byte[] SNonce { get; set; }
-        public static byte[] RNonce { get; set; }
+        public static Config Load()
+        {
+            var config = File.ReadAllText("Config.json");
+            return JsonConvert.DeserializeObject<Config>(config);
+        }
+        public string ResourceHash;
+        public string TagChars;
+        public string ServerKey;
+        public int MajorVersion;
+        public int MinorVersion;
+        public int BuildVersion;
+        public bool UseRC4;
     }
 }

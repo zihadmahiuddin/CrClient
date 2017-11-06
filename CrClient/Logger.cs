@@ -11,24 +11,29 @@ namespace CrClient
     {
         public Logger()
         {
-            if (!Directory.Exists("Packets"))
+            try
             {
-                Directory.CreateDirectory("Packets");
+                if (!Directory.Exists("Packets"))
+                {
+                    Directory.CreateDirectory("Packets");
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"An error has occured while initializing the logger.\nError: {ex.Message}");
             }
         }
 
         public static void Write(string value, string name)
         {
-            string path = $"Packets/{name}.txt";
-            if (!File.Exists(path))
+            string path = $"Packets/{name}.bin";
+            try
             {
-                FileStream fs = new FileStream(path, FileMode.OpenOrCreate);
-                fs.Close();
                 File.WriteAllText(path, value);
             }
-            else
+            catch(Exception ex)
             {
-                File.WriteAllText(path, value);
+                Console.WriteLine($"An error has occured while initializing the logger.\nError: {ex.Message}");
             }
         }
     }

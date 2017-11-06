@@ -50,6 +50,7 @@
             this.btnJoinClan = new System.Windows.Forms.Button();
             this.tbClanTag = new System.Windows.Forms.TextBox();
             this.btnLeaveCurrentClan = new System.Windows.Forms.Button();
+            this.btnGoHome = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnConnect
@@ -239,7 +240,7 @@
             // 
             // btnLeaveCurrentClan
             // 
-            this.btnLeaveCurrentClan.Location = new System.Drawing.Point(671, 97);
+            this.btnLeaveCurrentClan.Location = new System.Drawing.Point(668, 125);
             this.btnLeaveCurrentClan.Name = "btnLeaveCurrentClan";
             this.btnLeaveCurrentClan.Size = new System.Drawing.Size(59, 23);
             this.btnLeaveCurrentClan.TabIndex = 23;
@@ -247,11 +248,22 @@
             this.btnLeaveCurrentClan.UseVisualStyleBackColor = true;
             this.btnLeaveCurrentClan.Click += new System.EventHandler(this.btnLeaveCurrentClan_Click);
             // 
+            // btnGoHome
+            // 
+            this.btnGoHome.Location = new System.Drawing.Point(659, 68);
+            this.btnGoHome.Name = "btnGoHome";
+            this.btnGoHome.Size = new System.Drawing.Size(75, 23);
+            this.btnGoHome.TabIndex = 24;
+            this.btnGoHome.Text = "GoHome";
+            this.btnGoHome.UseVisualStyleBackColor = true;
+            this.btnGoHome.Click += new System.EventHandler(this.btnGoHome_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(773, 450);
+            this.Controls.Add(this.btnGoHome);
             this.Controls.Add(this.btnLeaveCurrentClan);
             this.Controls.Add(this.lblJoinClan);
             this.Controls.Add(this.btnJoinClan);
@@ -305,6 +317,7 @@
         public System.Windows.Forms.Button btnJoinClan;
         public System.Windows.Forms.TextBox tbClanTag;
         public System.Windows.Forms.Button btnLeaveCurrentClan;
+        public System.Windows.Forms.Button btnGoHome;
     }
 }
 

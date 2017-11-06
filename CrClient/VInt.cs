@@ -154,84 +154,6 @@ namespace CrClient
             return i;
         }
 
-        public static void AddVInt(this List<byte> Packet,int v2)
-        {
-
-            if (v2 <= -1)
-            {
-                if (!((v2 + 63 < 0) ^ true))
-                {
-                    Packet.Add((byte)(v2 & 0x3F | 0x40));
-                    Packet.AddRange(Packet.ToArray());
-                }
-                if (v2 >= -8191)
-                {
-                    Packet.Add((byte)(v2 | 0xC0));
-                    v2 >>= 6 & 0x7F;
-                    Packet.Add((byte)v2);
-                    Packet.AddRange(Packet.ToArray());
-                }
-                if (v2 >= -1048575)
-                {
-                    Packet.Add((byte)(v2 | 0xC0));
-                    Packet.Add((byte)(v2 >> 6 | 0x80));
-                    v2 >>= 13 & 0x7F;
-                    Packet.Add((byte)v2);
-                    Packet.AddRange(Packet.ToArray());
-                }
-                Packet.Add((byte)(v2 | 0xC0));
-                Packet.Add((byte)(v2 >> 6 | 0x80));
-                Packet.Add((byte)(v2 >> 13 | 0x80));
-                v2 >>= 20;
-                if (v2 <= -134217728)
-                {
-                    Packet.Add((byte)(v2 | 0x80));
-                    v2 >>= 27 & 0xF;
-                    Packet.Add((byte)v2);
-                    Packet.AddRange(Packet.ToArray());
-                }
-                Packet.Add((byte)(v2 & 0x7F));
-                Packet.AddRange(Packet.ToArray());
-            }
-            if (v2 > 63)
-            {
-                if (v2 < 0x2000)
-                {
-                    Packet.Add((byte)(v2 & 0x3F | 0x80));
-                    v2 >>= 6 & 0x7F;
-                    Packet.Add((byte)v2);
-                    Packet.AddRange(Packet.ToArray());
-                }
-                if (v2 < 0x100000)
-                {
-                    Packet.Add((byte)(v2 & 0x3F | 0x80));
-                    Packet.Add((byte)(v2 >> 6 | 0x80));
-                    v2 >>= 13 & 0x7F;
-                    Packet.Add((byte)v2);
-                    Packet.AddRange(Packet.ToArray());
-                }
-                Packet.Add((byte)(v2 & 0x3F | 0x80));
-                Packet.Add((byte)(v2 >> 6 | 0x80));
-                Packet.Add((byte)(v2 >> 13 | 0x80));
-                v2 >>= 20;
-
-                if (v2 >= 0x8000000)
-                {
-                    Packet.Add((byte)(v2 | 0x80));
-                    v2 >>= 27 & 0xF;
-                    Packet.Add((byte)v2);
-                    Packet.AddRange(Packet.ToArray());
-                }
-
-                Packet.Add((byte)(v2 & 0x7F));
-                Packet.AddRange(Packet.ToArray());
-            }
-
-            v2 = v2 & 0x3F;
-            Packet.Add((byte)v2);
-            Packet.AddRange(Packet.ToArray());
-        }
-
         public static byte[] WritevInt(int v2)
         {
             var stream = new MemoryStream(5);
@@ -309,6 +231,78 @@ namespace CrClient
             v2 = v2 & 0x3F;
             stream.WriteByte((byte)v2);
             return stream.ToArray();
+        }
+
+
+        //List
+        public static void AddVInt(this List<byte> _Packet, int _Value)
+        {
+            if (_Value > 63)
+            {
+                _Packet.Add((byte)(_Value & 0x3F | 0x80));
+
+                if (_Value > 8191)
+                {
+                    _Packet.Add((byte)(_Value >> 6 | 0x80));
+
+                    if (_Value > 1048575)
+                    {
+                        _Packet.Add((byte)(_Value >> 13 | 0x80));
+
+                        if (_Value > 134217727)
+                        {
+                            _Packet.Add((byte)(_Value >> 20 | 0x80));
+                            _Value >>= 27 & 0x7F;
+                        }
+                        else
+                            _Value >>= 20 & 0x7F;
+                    }
+                    else
+                        _Value >>= 13 & 0x7F;
+
+                }
+                else
+                    _Value >>= 6 & 0x7F;
+            }
+            _Packet.Add((byte)_Value);
+        }
+
+        public static void AddVInt64(this List<byte> _Packet, long _Value)
+        {
+            var Stream = new MemoryStream(6);
+            byte Temp = 0;
+
+            Temp = (byte)((_Value >> 57) & 0x40L);
+            _Value = _Value ^ (_Value >> 63);
+            Temp |= (byte)(_Value & 0x3FL);
+
+            _Value >>= 6;
+
+            if (_Value != 0)
+            {
+                Temp |= 0x80;
+                Stream.WriteByte(Temp);
+
+                while (true)
+                {
+                    Temp = (byte)(_Value & (0x7FL));
+                    _Value >>= 7;
+
+                    Temp |= (byte)((_Value != 0 ? 1 : 0) << 7);
+
+                    Stream.WriteByte(Temp);
+
+                    if (_Value == 0)
+                        break;
+                }
+            }
+            else
+            {
+                Stream.WriteByte(Temp);
+            }
+
+            _Packet.Add(0);
+            _Packet.AddRange(Stream.ToArray());
         }
 
     }

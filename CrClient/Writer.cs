@@ -46,6 +46,11 @@ namespace CrClient
             _Packet.AddRange(BitConverter.GetBytes(_Value).Reverse());
         }
 
+        public static void AddBool(this List<byte> Packet, bool _Value)
+        {
+            Packet.Add(_Value ? (byte)1 : (byte)0);
+        }
+
         public static byte[] HexaToBytes(this string _Value)
         {
             string _Tmp = _Value.Replace("-", string.Empty);
